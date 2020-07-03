@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using HelloWebGPUNet.WebGPU;
+
 
 namespace HelloWebGPUNet
 {
@@ -17,7 +19,11 @@ namespace HelloWebGPUNet
             Application.SetHighDpiMode(HighDpiMode.SystemAware);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
+
+            var window = new Form1();
+            var device = Dawn.createDevice(window.Handle);
+
+            Application.Run(window);
         }
     }
 }

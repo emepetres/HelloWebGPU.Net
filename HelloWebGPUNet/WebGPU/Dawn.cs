@@ -12,6 +12,6 @@ namespace HelloWebGPUNet.WebGPU
     public class Dawn
     {
         [DllImport("Dawn.Native.dll")]
-        public static extern unsafe WGPUDevice createDevice(HWND handle, WGPUBackendType type);
+        public static extern unsafe WGPUDevice createDevice(HWND handle, WGPUBackendType type = WGPUBackendType.WGPUBackendType_Force32);
     }
 }

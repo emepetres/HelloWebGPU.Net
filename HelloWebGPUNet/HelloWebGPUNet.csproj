@@ -18,4 +18,13 @@
     <ProjectReference Include="..\..\WebGPU.NET\WebGPUGen\WaveEngine.Bindings.WebGPU\WaveEngine.Bindings.WebGPU.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="..\Dawn.Native\bin\$(Configuration)\x64\*.dll" Link="$(FileName)$(Extension)" Visible="false">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Condition="$(Configuration)=='Debug'" Include="..\Dawn.Native\bin\$(Configuration)\x64\*.pdb" Link="$(FileName)$(Extension)" Visible="false">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
