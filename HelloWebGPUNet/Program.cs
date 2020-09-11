@@ -30,7 +30,7 @@ namespace HelloWebGPUNet
             var queue = WebGPUNative.wgpuDeviceGetDefaultQueue(device);
             var swapChain = Dawn.createSwapChain(device);
 
-            //TODO create pipeline and buffers
+            Triangle.CreatePipelineAndBuffers(device);
 
             window.Show();
 
