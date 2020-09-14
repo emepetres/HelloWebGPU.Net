@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HelloWebGPUNet.WebGPU;
+using System;
 using System.Collections.Generic;
 using System.DirectoryServices;
 using System.Runtime.InteropServices;
@@ -7,19 +8,234 @@ using WaveEngine.Bindings.WebGPU;
 
 namespace HelloWebGPUNet
 {
-	using WGPUDevice = IntPtr;
-	using WGPUShaderModule = IntPtr;
-
 	public unsafe class Triangle
 	{
-		public static void CreatePipelineAndBuffers(WGPUDevice device)
+		public static IntPtr Device;
+		public static IntPtr Queue;
+		public static IntPtr SwapChain;
+
+		static IntPtr pipeline;
+		static IntPtr vertBuf; // vertex buffer with triangle position and colours
+		static IntPtr indxBuf; // index buffer
+		static IntPtr uRotBuf; // uniform buffer (containing the rotation angle)
+		static IntPtr bindGroup;
+
+		static float rotDeg = 0.0f; // Current rotation angle (in degrees, updated per frame).
+		static char* str_entrypoint = (char*)Marshal.StringToHGlobalAuto("main").ToPointer();
+
+		public static void CreatePipelineAndBuffers()
         {
 			// Load shaders
 			ShaderCodeToUnmanagedMemory(triangleVert, out triangle_vert);
 			ShaderCodeToUnmanagedMemory(triangleFrag, out triangle_frag);
-			WGPUShaderModule vertMod = CreateShader(device, (uint*)triangle_vert.ToPointer(), (uint)triangleVert.Length);
-			WGPUShaderModule fragMod = CreateShader(device, (uint*)triangle_frag.ToPointer(), (uint)triangleFrag.Length);
+			var vertMod = CreateShader(Device, (uint*)triangle_vert.ToPointer(), (uint)triangleVert.Length);
+			var fragMod = CreateShader(Device, (uint*)triangle_frag.ToPointer(), (uint)triangleFrag.Length);
+
+			WGPUBindGroupLayoutEntry bglEntry = new WGPUBindGroupLayoutEntry
+			{
+				binding = 0,
+				visibility = WGPUShaderStage.WGPUShaderStage_Vertex,
+				type = WGPUBindingType.WGPUBindingType_UniformBuffer
+			};
+			WGPUBindGroupLayoutDescriptor bglDesc = new WGPUBindGroupLayoutDescriptor
+			{
+				entryCount = 1,
+				entries = &bglEntry
+			};
+			var bindGroupLayout = WebGPUNative.wgpuDeviceCreateBindGroupLayout(Device, &bglDesc);
+
+			WGPUPipelineLayoutDescriptor layoutDesc = new WGPUPipelineLayoutDescriptor
+			{
+				bindGroupLayoutCount = 1,
+				bindGroupLayouts = &bindGroupLayout
+			};
+			IntPtr pipelineLayout = WebGPUNative.wgpuDeviceCreatePipelineLayout(Device, &layoutDesc);
+
+			// begin pipeline set-up
+			WGPURenderPipelineDescriptor desc = new WGPURenderPipelineDescriptor
+			{
+				layout = pipelineLayout,
+				vertexStage = new WGPUProgrammableStageDescriptor()
+				{
+					module = vertMod,
+					entryPoint = str_entrypoint
+				}
+			};
+
+			WGPUProgrammableStageDescriptor fragStage = new WGPUProgrammableStageDescriptor
+			{
+				module = fragMod,
+				entryPoint = str_entrypoint
+			};
+			desc.fragmentStage = &fragStage;
+
+			// describe buffer layouts
+			var vertAttrs = stackalloc WGPUVertexAttributeDescriptor[2];
+			vertAttrs[0] = new WGPUVertexAttributeDescriptor
+			{
+				format = WGPUVertexFormat.WGPUVertexFormat_Float2,
+				offset = 0,
+				shaderLocation = 0
+			};
+			vertAttrs[1] = new WGPUVertexAttributeDescriptor
+			{
+				format = WGPUVertexFormat.WGPUVertexFormat_Float3,
+				offset = 2 * sizeof(float),
+				shaderLocation = 1
+			};
+
+			WGPUVertexBufferLayoutDescriptor vertDesc = new WGPUVertexBufferLayoutDescriptor
+			{
+				arrayStride = 5 * sizeof(float),
+				attributeCount = 2,
+				attributes = vertAttrs
+			};
+			WGPUVertexStateDescriptor vertState = new WGPUVertexStateDescriptor
+			{
+				indexFormat = WGPUIndexFormat.WGPUIndexFormat_Uint16,
+				vertexBufferCount = 1,
+				vertexBuffers = &vertDesc
+			};
+
+			desc.vertexState = &vertState;
+			desc.primitiveTopology = WGPUPrimitiveTopology.WGPUPrimitiveTopology_TriangleList;
+
+			desc.sampleCount = 1;
+
+			// describe blend
+			WGPUBlendDescriptor blendDesc = new WGPUBlendDescriptor
+			{
+				operation = WGPUBlendOperation.WGPUBlendOperation_Add,
+				srcFactor = WGPUBlendFactor.WGPUBlendFactor_SrcAlpha,
+				dstFactor = WGPUBlendFactor.WGPUBlendFactor_OneMinusSrcAlpha
+			};
+			WGPUColorStateDescriptor colorDesc = new WGPUColorStateDescriptor
+			{
+				format = Dawn.getSwapChainFormat(Device),
+				alphaBlend = blendDesc,
+				colorBlend = blendDesc,
+				writeMask = WGPUColorWriteMask.WGPUColorWriteMask_All
+			};
+
+			desc.colorStateCount = 1;
+			desc.colorStates = &colorDesc;
+
+			desc.sampleMask = 0xFFFFFFFF; // <-- Note: this currently causes Emscripten to fail (sampleMask ends up as -1, which trips an assert)
+
+			pipeline = WebGPUNative.wgpuDeviceCreateRenderPipeline(Device, ref desc);
+
+			// partial clean-up (just move to the end, no?)
+			WebGPUNative.wgpuPipelineLayoutRelease(pipelineLayout);
+
+			WebGPUNative.wgpuShaderModuleRelease(fragMod);
+			WebGPUNative.wgpuShaderModuleRelease(vertMod);
+
+			// create the buffers (x, y, r, g, b)
+			float[] vertData = {
+				-0.8f, -0.8f, 0.0f, 0.0f, 1.0f, // BL
+				 0.8f, -0.8f, 0.0f, 1.0f, 0.0f, // BR
+				-0.0f,  0.8f, 1.0f, 0.0f, 0.0f, // top
+			};
+			var p_vertData = stackalloc float[vertData.Length];
+			for (int i = 0; i < vertData.Length; i++)
+            {
+				p_vertData[i] = vertData[i];
+            }
+			UInt16[] indxData = {
+				0, 1, 2,
+				0 // padding (better way of doing this?)
+			};
+			var p_indxData = stackalloc float[indxData.Length];
+			for (int i = 0; i < indxData.Length; i++)
+			{
+				p_indxData[i] = indxData[i];
+			}
+			vertBuf = CreateBuffer(p_vertData, (ulong)(vertData.Length*sizeof(float)), WGPUBufferUsage.WGPUBufferUsage_Vertex);
+			indxBuf = CreateBuffer(p_indxData, (ulong)(indxData.Length*sizeof(UInt16)), WGPUBufferUsage.WGPUBufferUsage_Index);
+
+            // create the uniform bind group (note 'rotDeg' is copied here, not bound in any way)
+			fixed (void * data = &rotDeg)
+            {
+				uRotBuf = CreateBuffer(data, sizeof(float), WGPUBufferUsage.WGPUBufferUsage_Uniform);
+			}
+
+			WGPUBindGroupEntry bgEntry = new WGPUBindGroupEntry
+			{
+				binding = 0,
+				buffer = uRotBuf,
+				offset = 0,
+				size = sizeof(float) // sizeof(rotDeg)
+			};
+
+			WGPUBindGroupDescriptor bgDesc = new WGPUBindGroupDescriptor
+			{
+				layout = bindGroupLayout,
+				entryCount = 1,
+				entries = &bgEntry
+			};
+
+			bindGroup = WebGPUNative.wgpuDeviceCreateBindGroup(Device, &bgDesc);
+
+			// last bit of clean-up
+			WebGPUNative.wgpuBindGroupLayoutRelease(bindGroupLayout);
 		}
+
+		public static bool redraw()
+		{
+			IntPtr backBufView = WebGPUNative.wgpuSwapChainGetCurrentTextureView(SwapChain); // create textureView
+
+			WGPURenderPassColorAttachmentDescriptor colorDesc = new WGPURenderPassColorAttachmentDescriptor
+			{
+				attachment = backBufView,
+				loadOp = WGPULoadOp.WGPULoadOp_Clear,
+				storeOp = WGPUStoreOp.WGPUStoreOp_Store,
+				clearColor = new WGPUColor
+				{
+					r = 0.3f,
+					g = 0.3f,
+					b = 0.3f,
+					a = 1.0f
+				}
+			};
+
+			WGPURenderPassDescriptor renderPass = new WGPURenderPassDescriptor
+			{
+				colorAttachmentCount = 1,
+				colorAttachments = &colorDesc
+			};
+
+			IntPtr encoder = WebGPUNative.wgpuDeviceCreateCommandEncoder(Device, null); // create encoder
+			IntPtr pass = WebGPUNative.wgpuCommandEncoderBeginRenderPass(encoder, &renderPass);
+
+			// update the rotation
+			rotDeg += 0.1f;
+			fixed (void* data = &rotDeg)
+			{
+				QueueWriteBuffer(uRotBuf, 0, data, sizeof(float));
+			}
+
+            // draw the triangle (comment these five lines to simply clear the screen)
+            WebGPUNative.wgpuRenderPassEncoderSetPipeline(pass, pipeline);
+            WebGPUNative.wgpuRenderPassEncoderSetBindGroup(pass, 0, bindGroup, 0, null);
+            WebGPUNative.wgpuRenderPassEncoderSetVertexBuffer(pass, 0, vertBuf, 0, 0);
+            WebGPUNative.wgpuRenderPassEncoderSetIndexBuffer(pass, indxBuf, 0, 0);
+            WebGPUNative.wgpuRenderPassEncoderDrawIndexed(pass, 3, 1, 0, 0, 0);
+
+            WebGPUNative.wgpuRenderPassEncoderEndPass(pass);
+			WebGPUNative.wgpuRenderPassEncoderRelease(pass);                         // release pass
+			IntPtr commands = WebGPUNative.wgpuCommandEncoderFinish(encoder, null);  // create commands
+			WebGPUNative.wgpuCommandEncoderRelease(encoder);                         // release encoder
+
+			WebGPUNative.wgpuQueueSubmit(Queue, 1, &commands);
+			WebGPUNative.wgpuCommandBufferRelease(commands);                         // release commands
+
+			// TODO EMSCRIPTEN: wgpuSwapChainPresent is unsupported in Emscripten, so what do we do?
+			WebGPUNative.wgpuSwapChainPresent(SwapChain);
+
+			WebGPUNative.wgpuTextureViewRelease(backBufView);                        // release textureView
+
+			return true;
+        }
 
 		private static void ShaderCodeToUnmanagedMemory(UInt32[] code, out IntPtr p_code)
         {
@@ -38,7 +254,7 @@ namespace HelloWebGPUNet
 		 * \param[in] size size of \a code in bytes
 		 * \param[in] label optional shader name
 		 */
-		private static WGPUShaderModule CreateShader(WGPUDevice device, uint* code, UInt32 size, char* label = null)
+		private static IntPtr CreateShader(IntPtr Device, uint* code, UInt32 size, char* label = null)
         {
 			WGPUShaderModuleSPIRVDescriptor spirv = new WGPUShaderModuleSPIRVDescriptor()
 			{
@@ -46,7 +262,7 @@ namespace HelloWebGPUNet
 				{
 					sType = WGPUSType.WGPUSType_ShaderModuleSPIRVDescriptor
 				},
-				codeSize = size,
+				codeSize = size * sizeof(UInt32),
 				code = code
 			};
 
@@ -56,7 +272,41 @@ namespace HelloWebGPUNet
 				label = label
 			};
 
-			return WebGPUNative.wgpuDeviceCreateShaderModule(device, &desc);
+			return WebGPUNative.wgpuDeviceCreateShaderModule(Device, &desc);
+		}
+
+		/**
+		 * Helper to create a buffer.
+		 *
+		 * \param[in] data pointer to the start of the raw data
+		 * \param[in] size number of bytes in \a data
+		 * \param[in] usage type of buffer
+		 */
+		private static IntPtr CreateBuffer(void* data, ulong size, WGPUBufferUsage usage) {
+			WGPUBufferDescriptor desc = new WGPUBufferDescriptor
+			{
+				usage = WGPUBufferUsage.WGPUBufferUsage_CopyDst | usage,
+				size = size
+			};
+			IntPtr buffer = WebGPUNative.wgpuDeviceCreateBuffer(Device, &desc);
+			QueueWriteBuffer(buffer, 0, data, size);
+			return buffer;
+		}
+
+		private static void QueueWriteBuffer(IntPtr buffer, ulong bufferOffset, void * data, ulong size)
+        {
+			// TODO EMSCRIPTEN change to wgpuBufferSetSubData(buffer, bufferOffset, size, data) for emscripten
+			WebGPUNative.wgpuQueueWriteBuffer(Queue, buffer, bufferOffset, data, size);
+		}
+
+		public static char* Str2Ptr(string str)
+        {
+			char* p = stackalloc char[str.Length];
+			for (int i = 0; i < str.Length; i++)
+            {
+				p[i] = str[i];
+            }
+			return p;
 		}
 
 		/**
@@ -154,4 +404,17 @@ namespace HelloWebGPUNet
 			0x00000009, 0x00000012, 0x000100fd, 0x00010038
 		};
 	}
+
+	//public class WGPUPipelineLayout
+	//{
+	//	private IntPtr value;
+	//	public static implicit operator WGPUPipelineLayout(IntPtr val)
+	//	{
+	//		return new WGPUPipelineLayout() { value = val };
+	//	}
+	//	public static implicit operator IntPtr(WGPUPipelineLayout obj)
+	//	{
+	//		return ((obj == null) ? IntPtr.Zero : obj.value);
+	//	}
+	//}
 }

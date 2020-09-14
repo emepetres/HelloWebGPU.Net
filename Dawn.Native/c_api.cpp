@@ -250,6 +250,3 @@ WGPUTextureFormat getSwapChainFormat(WGPUDevice /*device*/)
 	return impl::swapPref;
 }
 
-WGPUProc getProcAddress(WGPUDevice device, const char * procName) {
-	return wgpuGetProcAddress(device, procName);
-}

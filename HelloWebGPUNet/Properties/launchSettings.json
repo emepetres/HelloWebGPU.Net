@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "HelloWebGPUNet": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

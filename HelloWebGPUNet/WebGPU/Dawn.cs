@@ -22,7 +22,7 @@ namespace HelloWebGPUNet.WebGPU
         [DllImport("Dawn.Native.dll")]
         public static extern WGPUTextureFormat getSwapChainFormat(WGPUDevice device);
 
-        [DllImport("Dawn.Native.dll")]
-        public static extern WGPUProc getProcAddress(WGPUDevice device, string procName);
+        [DllImport("dawn_proc.dll")]
+        public static extern WGPUProc wgpuGetProcAddress(WGPUDevice device, string procName);
     }
 }
