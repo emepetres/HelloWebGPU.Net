@@ -12,6 +12,9 @@ namespace HelloWebGPUNet
 		public static extern void initialize(IntPtr _device, IntPtr _queue, IntPtr _swapchain);
 
 		[DllImport("Dawn.Native.dll")]
+		public static extern void initializePipelineAndBuffers(IntPtr _pipeline, IntPtr _vertBuf, IntPtr _indxBuf, IntPtr _uRotBuf, IntPtr _bindGroup);
+
+		[DllImport("Dawn.Native.dll")]
 		public unsafe static extern IntPtr createShader(UInt32* code, UInt32 size, string label = null);
 
 		[DllImport("Dawn.Native.dll")]
@@ -19,6 +22,22 @@ namespace HelloWebGPUNet
 
 		[DllImport("Dawn.Native.dll")]
 		public static extern IntPtr createFragShader();
+
+		[DllImport("Dawn.Native.dll")]
+		public static extern IntPtr createPipeline(IntPtr bindGroupLayout);
+
+
+		[DllImport("Dawn.Native.dll")]
+		public static extern IntPtr createVertBuffer();
+
+		[DllImport("Dawn.Native.dll")]
+		public static extern IntPtr createIndxBuffer();
+
+		[DllImport("Dawn.Native.dll")]
+		public static extern IntPtr createDataBuffer();
+
+		[DllImport("Dawn.Native.dll")]
+		public static extern IntPtr createBindGroup(IntPtr bindGroupLayout);
 
 		[DllImport("Dawn.Native.dll")]
 		public static extern IntPtr TestDeviceCreateRenderPipeline(ref WGPURenderPipelineDescriptor descriptor);

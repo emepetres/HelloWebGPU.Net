@@ -28,13 +28,14 @@ namespace HelloWebGPUNet
             var queue = WebGPUNative.wgpuDeviceGetDefaultQueue(device);
             var swapChain = Dawn.createSwapChain(device);
 
-            //Triangle.Device = device;
-            //Triangle.Queue = queue;
-            //Triangle.SwapChain = swapChain;
+            Triangle.Device = device;
+            Triangle.Queue = queue;
+            Triangle.SwapChain = swapChain;
             TriangleCPP.initialize(device, queue, swapChain);
 
-            //Triangle.CreatePipelineAndBuffers();
-            TriangleCPP.createPipelineAndBuffers();
+            Triangle.CreatePipelineAndBuffers();
+            TriangleCPP.initializePipelineAndBuffers(Triangle.pipeline, Triangle.vertBuf, Triangle.indxBuf, Triangle.uRotBuf, Triangle.bindGroup);
+            //TriangleCPP.createPipelineAndBuffers();
 
             window.Show();
 

@@ -25,6 +25,14 @@ void initialize(WGPUDevice _device, WGPUQueue _queue, WGPUSwapChain _swapchain) 
 	swapchain = _swapchain;
 }
 
+void initializePipelineAndBuffers(WGPURenderPipeline _pipeline, WGPUBuffer _vertBuf, WGPUBuffer _indxBuf, WGPUBuffer _uRotBuf, WGPUBindGroup _bindGroup) {
+	pipeline = _pipeline;
+	vertBuf = _vertBuf;
+	indxBuf = _indxBuf;
+	uRotBuf = _uRotBuf;
+	bindGroup = _bindGroup;
+}
+
 static uint32_t const triangle_vert[] = {
 	0x07230203, 0x00010000, 0x000d0008, 0x00000043, 0x00000000, 0x00020011, 0x00000001, 0x0006000b,
 	0x00000001, 0x4c534c47, 0x6474732e, 0x3035342e, 0x00000000, 0x0003000e, 0x00000000, 0x00000001,
@@ -107,11 +115,11 @@ WGPUShaderModule createFragShader()
 
 WGPURenderPipeline TestDeviceCreateRenderPipeline(WGPURenderPipelineDescriptor* descriptor)
 {
-	descriptor->vertexStage.entryPoint = "main";
+	/*descriptor->vertexStage.entryPoint = "main";
 	WGPUProgrammableStageDescriptor fragStage = {};
 	fragStage.module = descriptor->fragmentStage->module;
 	fragStage.entryPoint = "main";
-	descriptor->fragmentStage = &fragStage;
+	descriptor->fragmentStage = &fragStage;*/
 	return wgpuDeviceCreateRenderPipeline(device, descriptor);
 }
 
@@ -146,15 +154,8 @@ WGPUBuffer createBuffer(const void* data, size_t size, WGPUBufferUsage usage) {
 	return buffer;
 }
 
-/**
- * Bare minimum pipeline to draw a triangle using the above shaders.
- */
-void createPipelineAndBuffers() {
-	// compile shaders
 
-	WGPUShaderModule vertMod = createShader(triangle_vert, sizeof triangle_vert);
-	WGPUShaderModule fragMod = createShader(triangle_frag, sizeof triangle_frag);
-
+WGPUBindGroupLayout createBindGroupLayout() {
 	// bind group layout (used by both the pipeline layout and uniform bind group, released at the end of this function)
 	WGPUBindGroupLayoutEntry bglEntry = {};
 	bglEntry.binding = 0;
@@ -164,7 +165,14 @@ void createPipelineAndBuffers() {
 	WGPUBindGroupLayoutDescriptor bglDesc = {};
 	bglDesc.entryCount = 1;
 	bglDesc.entries = &bglEntry;
-	WGPUBindGroupLayout bindGroupLayout = wgpuDeviceCreateBindGroupLayout(device, &bglDesc);
+	return wgpuDeviceCreateBindGroupLayout(device, &bglDesc);
+}
+
+
+WGPURenderPipeline createPipeline(WGPUBindGroupLayout bindGroupLayout) {
+	// compile shaders
+	WGPUShaderModule vertMod = createShader(triangle_vert, sizeof triangle_vert);
+	WGPUShaderModule fragMod = createShader(triangle_frag, sizeof triangle_frag);
 
 	// pipeline layout (used by the render pipeline, released after its creation)
 	WGPUPipelineLayoutDescriptor layoutDesc = {};
@@ -223,7 +231,7 @@ void createPipelineAndBuffers() {
 
 	desc.sampleMask = 0xFFFFFFFF; // <-- Note: this currently causes Emscripten to fail (sampleMask ends up as -1, which trips an assert)
 
-	pipeline = wgpuDeviceCreateRenderPipeline(device, &desc);
+	WGPURenderPipeline _pipeline = wgpuDeviceCreateRenderPipeline(device, &desc);
 
 	// partial clean-up (just move to the end, no?)
 	wgpuPipelineLayoutRelease(pipelineLayout);
@@ -231,22 +239,38 @@ void createPipelineAndBuffers() {
 	wgpuShaderModuleRelease(fragMod);
 	wgpuShaderModuleRelease(vertMod);
 
+	return _pipeline;
+}
+
+WGPUBuffer createVertBuffer()
+{
 	// create the buffers (x, y, r, g, b)
 	float const vertData[] = {
 		-0.8f, -0.8f, 0.0f, 0.0f, 1.0f, // BL
 		 0.8f, -0.8f, 0.0f, 1.0f, 0.0f, // BR
 		-0.0f,  0.8f, 1.0f, 0.0f, 0.0f, // top
 	};
+	return createBuffer(vertData, sizeof(vertData), WGPUBufferUsage_Vertex);
+}
+
+WGPUBuffer createIndxBuffer()
+{
+	// create the buffers (x, y, r, g, b)
 	uint16_t const indxData[] = {
 		0, 1, 2,
 		0 // padding (better way of doing this?)
 	};
-	vertBuf = createBuffer(vertData, sizeof(vertData), WGPUBufferUsage_Vertex);
-	indxBuf = createBuffer(indxData, sizeof(indxData), WGPUBufferUsage_Index);
+	return createBuffer(indxData, sizeof(indxData), WGPUBufferUsage_Index);
+}
 
+WGPUBuffer createDataBuffer()
+{
 	// create the uniform bind group (note 'rotDeg' is copied here, not bound in any way)
-	uRotBuf = createBuffer(&rotDeg, sizeof(rotDeg), WGPUBufferUsage_Uniform);
+	return createBuffer(&rotDeg, sizeof(rotDeg), WGPUBufferUsage_Uniform);
+}
 
+WGPUBindGroup createBindGroup(WGPUBindGroupLayout bindGroupLayout)
+{
 	WGPUBindGroupEntry bgEntry = {};
 	bgEntry.binding = 0;
 	bgEntry.buffer = uRotBuf;
@@ -258,7 +282,19 @@ void createPipelineAndBuffers() {
 	bgDesc.entryCount = 1;
 	bgDesc.entries = &bgEntry;
 
-	bindGroup = wgpuDeviceCreateBindGroup(device, &bgDesc);
+	return wgpuDeviceCreateBindGroup(device, &bgDesc);
+}
+
+void createPipelineAndBuffers() {
+	WGPUBindGroupLayout bindGroupLayout = createBindGroupLayout();
+
+	pipeline = createPipeline(bindGroupLayout);
+
+	vertBuf = createVertBuffer();
+	indxBuf = createIndxBuffer();
+	uRotBuf = createDataBuffer();
+
+	bindGroup = createBindGroup(bindGroupLayout);
 
 	// last bit of clean-up
 	wgpuBindGroupLayoutRelease(bindGroupLayout);
