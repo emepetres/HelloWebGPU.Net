@@ -24,6 +24,9 @@
     <ClInclude Include="c_api.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="triangle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -33,6 +36,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="c_api.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="triangle.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

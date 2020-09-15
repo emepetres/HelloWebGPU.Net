@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.DirectoryServices;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using WaveEngine.Bindings.WebGPU;
@@ -25,13 +26,13 @@ namespace HelloWebGPUNet
 
 		public static void CreatePipelineAndBuffers()
         {
-			// Load shaders
-			ShaderCodeToUnmanagedMemory(triangleVert, out triangle_vert);
-			ShaderCodeToUnmanagedMemory(triangleFrag, out triangle_frag);
-			var vertMod = CreateShader(Device, (uint*)triangle_vert.ToPointer(), (uint)triangleVert.Length);
-			var fragMod = CreateShader(Device, (uint*)triangle_frag.ToPointer(), (uint)triangleFrag.Length);
+            // Load shaders
+            ShaderCodeToUnmanagedMemory(triangleVert, out triangle_vert);
+            ShaderCodeToUnmanagedMemory(triangleFrag, out triangle_frag);
+            var vertMod = CreateShader((uint*)triangle_vert.ToPointer(), (uint)triangleVert.Length);
+            var fragMod = CreateShader((uint*)triangle_frag.ToPointer(), (uint)triangleFrag.Length);
 
-			WGPUBindGroupLayoutEntry bglEntry = new WGPUBindGroupLayoutEntry
+            WGPUBindGroupLayoutEntry bglEntry = new WGPUBindGroupLayoutEntry
 			{
 				binding = 0,
 				visibility = WGPUShaderStage.WGPUShaderStage_Vertex,
@@ -254,7 +255,7 @@ namespace HelloWebGPUNet
 		 * \param[in] size size of \a code in bytes
 		 * \param[in] label optional shader name
 		 */
-		private static IntPtr CreateShader(IntPtr Device, uint* code, UInt32 size, char* label = null)
+		private static IntPtr CreateShader(uint* code, UInt32 size, char* label = null)
         {
 			WGPUShaderModuleSPIRVDescriptor spirv = new WGPUShaderModuleSPIRVDescriptor()
 			{
@@ -273,6 +274,33 @@ namespace HelloWebGPUNet
 			};
 
 			return WebGPUNative.wgpuDeviceCreateShaderModule(Device, &desc);
+		}
+
+		private static IntPtr CreateShader2(UInt32[] byte_code, char* label = null)
+		{
+			IntPtr shader;
+			fixed (uint* code = byte_code)
+            {
+				WGPUShaderModuleSPIRVDescriptor spirv = new WGPUShaderModuleSPIRVDescriptor()
+				{
+					chain = new WGPUChainedStruct()
+					{
+						sType = WGPUSType.WGPUSType_ShaderModuleSPIRVDescriptor
+					},
+					codeSize = (uint)byte_code.Length * sizeof(UInt32),
+					code = code
+				};
+
+				WGPUShaderModuleDescriptor desc = new WGPUShaderModuleDescriptor()
+				{
+					nextInChain = (WGPUChainedStruct*)&spirv,
+					label = label
+				};
+
+				shader = WebGPUNative.wgpuDeviceCreateShaderModule(Device, &desc);
+			}
+
+			return shader;
 		}
 
 		/**

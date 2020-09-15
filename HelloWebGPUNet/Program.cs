@@ -23,21 +23,26 @@ namespace HelloWebGPUNet
             Application.SetCompatibleTextRenderingDefault(false);
 
             var window = new Form1();
-            Triangle.Device = Dawn.createDevice(window.Handle);
+            var device = Dawn.createDevice(window.Handle);
+            WebGPUNative.LoadFuncionPointers(device, Dawn.wgpuGetProcAddress);
+            var queue = WebGPUNative.wgpuDeviceGetDefaultQueue(device);
+            var swapChain = Dawn.createSwapChain(device);
 
-            WebGPUNative.LoadFuncionPointers(Triangle.Device, Dawn.wgpuGetProcAddress);
+            //Triangle.Device = device;
+            //Triangle.Queue = queue;
+            //Triangle.SwapChain = swapChain;
+            TriangleCPP.initialize(device, queue, swapChain);
 
-            Triangle.Queue = WebGPUNative.wgpuDeviceGetDefaultQueue(Triangle.Device);
-            Triangle.SwapChain = Dawn.createSwapChain(Triangle.Device);
-
-            Triangle.CreatePipelineAndBuffers();
+            //Triangle.CreatePipelineAndBuffers();
+            TriangleCPP.createPipelineAndBuffers();
 
             window.Show();
 
             while(true)
             {
                 System.Windows.Forms.Application.DoEvents();
-                Triangle.redraw();
+                //Triangle.redraw();
+                TriangleCPP.redraw();
             }
             ////Application.Run(window);
         }
