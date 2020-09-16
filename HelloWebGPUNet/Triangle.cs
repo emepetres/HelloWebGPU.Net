@@ -43,12 +43,10 @@ namespace HelloWebGPUNet
 		public static IntPtr CreatePipeline(IntPtr bindGroupLayout)
 		{
 			// Load shaders
-			//ShaderCodeToUnmanagedMemory(triangleVert, out triangle_vert);
-			//var vertMod = CreateShader((uint*)triangle_vert.ToPointer(), (uint)triangleVert.Length);
-			var vertMod = TriangleCPP.createVertShader();
-			//ShaderCodeToUnmanagedMemory(triangleFrag, out triangle_frag);
-			//var fragMod = CreateShader((uint*)triangle_frag.ToPointer(), (uint)triangleFrag.Length);
-			var fragMod = TriangleCPP.createFragShader();
+			var vertMod = CreateShader(triangleVert);
+			//var vertMod = TriangleCPP.createVertShader();
+			var fragMod = CreateShader(triangleFrag);
+			//var fragMod = TriangleCPP.createFragShader();
 
 			WGPUPipelineLayoutDescriptor layoutDesc = new WGPUPipelineLayoutDescriptor
 			{
@@ -280,45 +278,7 @@ namespace HelloWebGPUNet
 			return true;
         }
 
-		private static void ShaderCodeToUnmanagedMemory(UInt32[] code, out IntPtr p_code)
-        {
-			int byteCount = code.Length * sizeof(UInt32);
-			p_code = Marshal.AllocHGlobal(byteCount);
-			// auxiliar byte array is needed because marshal does not accept UInt
-			byte[] byte_code = new byte[byteCount];
-			Buffer.BlockCopy(code, 0, byte_code, 0, byteCount);
-			Marshal.Copy(byte_code, 0, p_code, byteCount);
-		}
-
-		/**
-		 * Helper to create a shader from SPIR-V IR.
-		 *
-		 * \param[in] code shader source (output using the \c -V \c -x options in \c glslangValidator)
-		 * \param[in] size size of \a code in bytes
-		 * \param[in] label optional shader name
-		 */
-		private static IntPtr CreateShader(uint* code, UInt32 size, char* label = null)
-        {
-			WGPUShaderModuleSPIRVDescriptor spirv = new WGPUShaderModuleSPIRVDescriptor()
-			{
-				chain = new WGPUChainedStruct()
-				{
-					sType = WGPUSType.WGPUSType_ShaderModuleSPIRVDescriptor
-				},
-				codeSize = size * sizeof(UInt32),
-				code = code
-			};
-
-			WGPUShaderModuleDescriptor desc = new WGPUShaderModuleDescriptor()
-			{
-				nextInChain = (WGPUChainedStruct*)&spirv,
-				label = label
-			};
-
-			return WebGPUNative.wgpuDeviceCreateShaderModule(Device, &desc);
-		}
-
-		private static IntPtr CreateShader2(UInt32[] byte_code, char* label = null)
+		private static IntPtr CreateShader(UInt32[] byte_code, char* label = null)
 		{
 			IntPtr shader;
 			fixed (uint* code = byte_code)
@@ -329,7 +289,7 @@ namespace HelloWebGPUNet
 					{
 						sType = WGPUSType.WGPUSType_ShaderModuleSPIRVDescriptor
 					},
-					codeSize = (uint)byte_code.Length * sizeof(UInt32),
+					codeSize = (uint)byte_code.Length,
 					code = code
 				};
 
@@ -369,16 +329,6 @@ namespace HelloWebGPUNet
 			WebGPUNative.wgpuQueueWriteBuffer(Queue, buffer, bufferOffset, data, size);
 		}
 
-		public static char* Str2Ptr(string str)
-        {
-			char* p = stackalloc char[str.Length];
-			for (int i = 0; i < str.Length; i++)
-            {
-				p[i] = str[i];
-            }
-			return p;
-		}
-
 		/**
 		 * Vertex shader SPIR-V.
 		 * \code
@@ -401,7 +351,6 @@ namespace HelloWebGPUNet
 		 *	}
 		 * \endcode
 		 */
-		private static IntPtr triangle_vert;
 		private static UInt32[] triangleVert = {
 			0x07230203, 0x00010000, 0x000d0008, 0x00000043, 0x00000000, 0x00020011, 0x00000001, 0x0006000b,
 			0x00000001, 0x4c534c47, 0x6474732e, 0x3035342e, 0x00000000, 0x0003000e, 0x00000000, 0x00000001,
@@ -456,7 +405,6 @@ namespace HelloWebGPUNet
 		 *	}
 		 * \endcode
 		 */
-		private static IntPtr triangle_frag;
 		private static UInt32[] triangleFrag = {
 			0x07230203, 0x00010000, 0x000d0007, 0x00000013, 0x00000000, 0x00020011, 0x00000001, 0x0006000b,
 			0x00000001, 0x4c534c47, 0x6474732e, 0x3035342e, 0x00000000, 0x0003000e, 0x00000000, 0x00000001,

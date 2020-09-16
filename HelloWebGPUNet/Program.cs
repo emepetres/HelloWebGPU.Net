@@ -34,7 +34,7 @@ namespace HelloWebGPUNet
             TriangleCPP.initialize(device, queue, swapChain);
 
             Triangle.CreatePipelineAndBuffers();
-            TriangleCPP.initializePipelineAndBuffers(Triangle.pipeline, Triangle.vertBuf, Triangle.indxBuf, Triangle.uRotBuf, Triangle.bindGroup);
+            //TriangleCPP.initializePipelineAndBuffers(Triangle.pipeline, Triangle.vertBuf, Triangle.indxBuf, Triangle.uRotBuf, Triangle.bindGroup);
             //TriangleCPP.createPipelineAndBuffers();
 
             window.Show();
@@ -42,10 +42,9 @@ namespace HelloWebGPUNet
             while(true)
             {
                 System.Windows.Forms.Application.DoEvents();
-                //Triangle.redraw();
-                TriangleCPP.redraw();
+                Triangle.redraw();
+                //TriangleCPP.redraw();
             }
-            ////Application.Run(window);
         }
     }
 }
