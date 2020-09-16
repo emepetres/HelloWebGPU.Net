@@ -44,10 +44,10 @@ namespace HelloWebGPUNet
 		{
 			// Load shaders
 			//ShaderCodeToUnmanagedMemory(triangleVert, out triangle_vert);
-			//ShaderCodeToUnmanagedMemory(triangleFrag, out triangle_frag);
 			//var vertMod = CreateShader((uint*)triangle_vert.ToPointer(), (uint)triangleVert.Length);
-			//var fragMod = CreateShader((uint*)triangle_frag.ToPointer(), (uint)triangleFrag.Length);
 			var vertMod = TriangleCPP.createVertShader();
+			//ShaderCodeToUnmanagedMemory(triangleFrag, out triangle_frag);
+			//var fragMod = CreateShader((uint*)triangle_frag.ToPointer(), (uint)triangleFrag.Length);
 			var fragMod = TriangleCPP.createFragShader();
 
 			WGPUPipelineLayoutDescriptor layoutDesc = new WGPUPipelineLayoutDescriptor
@@ -129,7 +129,6 @@ namespace HelloWebGPUNet
 			desc.sampleMask = 0xFFFFFFFF; // <-- Note: this currently causes Emscripten to fail (sampleMask ends up as -1, which trips an assert)
 
 			IntPtr _pipeline = WebGPUNative.wgpuDeviceCreateRenderPipeline(Device, ref desc);
-			//IntPtr _pipeline = TriangleCPP.TestDeviceCreateRenderPipeline(ref desc);
 
 			// partial clean-up (just move to the end, no?)
 			WebGPUNative.wgpuPipelineLayoutRelease(pipelineLayout);
@@ -162,7 +161,7 @@ namespace HelloWebGPUNet
 				0, 1, 2,
 				0 // padding (better way of doing this?)
 			};
-			var p_indxData = stackalloc float[indxData.Length];
+			var p_indxData = stackalloc UInt16[indxData.Length];
 			for (int i = 0; i < indxData.Length; i++)
 			{
 				p_indxData[i] = indxData[i];
@@ -182,12 +181,12 @@ namespace HelloWebGPUNet
 			return data_buff;
 		}
 
-		public static IntPtr CreateBindGroup(IntPtr bindGroupLayout)
+		public static IntPtr CreateBindGroup(IntPtr bindGroupLayout, IntPtr _uRotBuf)
 		{
 			WGPUBindGroupEntry bgEntry = new WGPUBindGroupEntry
 			{
 				binding = 0,
-				buffer = uRotBuf,
+				buffer = _uRotBuf,
 				offset = 0,
 				size = sizeof(float) // sizeof(rotDeg)
 			};
@@ -205,19 +204,20 @@ namespace HelloWebGPUNet
 		public static void CreatePipelineAndBuffers()
         {
 			IntPtr bindGroupLayout = createBindGroupLayout();
+			//IntPtr bindGroupLayout = TriangleCPP.createBindGroupLayout();
 
-			//pipeline = CreatePipeline(bindGroupLayout);
-			pipeline = TriangleCPP.createPipeline(bindGroupLayout);
+			pipeline = CreatePipeline(bindGroupLayout);
+			//pipeline = TriangleCPP.createPipeline(bindGroupLayout);
 
-			//vertBuf = CreateVertBuffer();
-			vertBuf = TriangleCPP.createVertBuffer();
-			//indxBuf = CreateIndxBuffer();
-			indxBuf = TriangleCPP.createIndxBuffer();
-			//uRotBuf = CreateDataBuffer();
-			uRotBuf = TriangleCPP.createDataBuffer();
+			vertBuf = CreateVertBuffer();
+			//vertBuf = TriangleCPP.createVertBuffer();
+			indxBuf = CreateIndxBuffer();
+			//indxBuf = TriangleCPP.createIndxBuffer();
+			uRotBuf = CreateDataBuffer();
+			//uRotBuf = TriangleCPP.createDataBuffer();
 
-			bindGroup = CreateBindGroup(bindGroupLayout);
-			//bindGroup = TriangleCPP.createBindGroup(bindGroupLayout);
+			bindGroup = CreateBindGroup(bindGroupLayout, uRotBuf);
+			//bindGroup = TriangleCPP.createBindGroup(bindGroupLayout, uRotBuf);
 
 			// last bit of clean-up
 			WebGPUNative.wgpuBindGroupLayoutRelease(bindGroupLayout);

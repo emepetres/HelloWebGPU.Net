@@ -113,16 +113,6 @@ WGPUShaderModule createFragShader()
 	return createShader(triangle_frag, sizeof triangle_frag);
 }
 
-WGPURenderPipeline TestDeviceCreateRenderPipeline(WGPURenderPipelineDescriptor* descriptor)
-{
-	/*descriptor->vertexStage.entryPoint = "main";
-	WGPUProgrammableStageDescriptor fragStage = {};
-	fragStage.module = descriptor->fragmentStage->module;
-	fragStage.entryPoint = "main";
-	descriptor->fragmentStage = &fragStage;*/
-	return wgpuDeviceCreateRenderPipeline(device, descriptor);
-}
-
 /**
  * \def QUEUE_WRITE_BUFFER
  * Emscripten doesn't yet have \c wgpuQueueWriteBuffer() so we need to use the
@@ -269,11 +259,11 @@ WGPUBuffer createDataBuffer()
 	return createBuffer(&rotDeg, sizeof(rotDeg), WGPUBufferUsage_Uniform);
 }
 
-WGPUBindGroup createBindGroup(WGPUBindGroupLayout bindGroupLayout)
+WGPUBindGroup createBindGroup(WGPUBindGroupLayout bindGroupLayout, WGPUBuffer _uRotBuf)
 {
 	WGPUBindGroupEntry bgEntry = {};
 	bgEntry.binding = 0;
-	bgEntry.buffer = uRotBuf;
+	bgEntry.buffer = _uRotBuf;
 	bgEntry.offset = 0;
 	bgEntry.size = sizeof(rotDeg);
 
@@ -294,7 +284,7 @@ void createPipelineAndBuffers() {
 	indxBuf = createIndxBuffer();
 	uRotBuf = createDataBuffer();
 
-	bindGroup = createBindGroup(bindGroupLayout);
+	bindGroup = createBindGroup(bindGroupLayout, uRotBuf);
 
 	// last bit of clean-up
 	wgpuBindGroupLayoutRelease(bindGroupLayout);

@@ -12,13 +12,13 @@ extern "C" {
 	EXPORT WGPUShaderModule createShader(const uint32_t* code, uint32_t size, const char* label);
 	EXPORT WGPUShaderModule createVertShader();
 	EXPORT WGPUShaderModule createFragShader();
-	EXPORT WGPURenderPipeline TestDeviceCreateRenderPipeline(WGPURenderPipelineDescriptor* descriptor);
 	EXPORT WGPUBuffer createBuffer(const void* data, size_t size, WGPUBufferUsage usage);
+	EXPORT WGPUBindGroupLayout createBindGroupLayout();
 	EXPORT WGPURenderPipeline createPipeline(WGPUBindGroupLayout bindGroupLayout);
 	EXPORT WGPUBuffer createVertBuffer();
 	EXPORT WGPUBuffer createIndxBuffer();
 	EXPORT WGPUBuffer createDataBuffer();
-	EXPORT WGPUBindGroup createBindGroup(WGPUBindGroupLayout bindGroupLayout);
+	EXPORT WGPUBindGroup createBindGroup(WGPUBindGroupLayout bindGroupLayout, WGPUBuffer _uRotBuf);
 	EXPORT void createPipelineAndBuffers();
 	EXPORT bool redraw();
 }
