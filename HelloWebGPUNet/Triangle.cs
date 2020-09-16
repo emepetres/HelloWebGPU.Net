@@ -318,7 +318,7 @@ namespace HelloWebGPUNet
 				usage = WGPUBufferUsage.WGPUBufferUsage_CopyDst | usage,
 				size = size
 			};
-			IntPtr buffer = WebGPUNative.wgpuDeviceCreateBuffer(Device, &desc);
+			IntPtr buffer = WebGPUNative.wgpuDeviceCreateBuffer(Device, ref desc);
 			QueueWriteBuffer(buffer, 0, data, size);
 			return buffer;
 		}

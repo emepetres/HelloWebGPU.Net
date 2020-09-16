@@ -24,7 +24,6 @@ namespace HelloWebGPUNet
 
             var window = new Form1();
             var device = Dawn.createDevice(window.Handle);
-            WebGPUNative.LoadFuncionPointers(device, Dawn.wgpuGetProcAddress);
             var queue = WebGPUNative.wgpuDeviceGetDefaultQueue(device);
             var swapChain = Dawn.createSwapChain(device);
 
