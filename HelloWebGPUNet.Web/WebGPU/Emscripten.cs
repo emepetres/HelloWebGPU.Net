@@ -27,14 +27,14 @@ namespace HelloWebGPUNet.Web.WebGPU
         public delegate int EMLoop(double time, void* userData);
 
         [DllImport("libWebGPU")]
-        private static extern WGPUDevice test_emscripten_webgpu_get_device();
+        private static extern WGPUDevice emscripten_webgpu_get_device();
 
         [DllImport("libWebGPU")]
         private static extern WGPUDevice emscripten_request_animation_frame_loop(EMLoop em_loop, void* userData);
 
         public static WGPUDevice CreateDevice(IntPtr _)
         {
-            return test_emscripten_webgpu_get_device();
+            return emscripten_webgpu_get_device();
         }
 
         public static WGPUSwapChain CreateSwapChain(WGPUDevice device)

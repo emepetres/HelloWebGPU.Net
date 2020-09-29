@@ -197,29 +197,22 @@ namespace HelloWebGPUNet.Web
 
 		public static void CreatePipelineAndBuffers()
 		{
-			Console.WriteLine("----> PipelinesAndBuffers...");
 			IntPtr bindGroupLayout = createBindGroupLayout();
 			//IntPtr bindGroupLayout = TriangleCPP.createBindGroupLayout();
 
-			Console.WriteLine("----> Pipelines...");
 			pipeline = CreatePipeline(bindGroupLayout);
 			//pipeline = TriangleCPP.createPipeline(bindGroupLayout);
 
-			Console.WriteLine("----> Vertex buffer...");
 			vertBuf = CreateVertBuffer();
 			//vertBuf = TriangleCPP.createVertBuffer();
-			Console.WriteLine("----> Index buffer...");
 			indxBuf = CreateIndxBuffer();
 			//indxBuf = TriangleCPP.createIndxBuffer();
-			Console.WriteLine("----> Data buffer...");
 			uRotBuf = CreateDataBuffer();
 			//uRotBuf = TriangleCPP.createDataBuffer();
 
-			Console.WriteLine("----> Bind group...");
 			bindGroup = CreateBindGroup(bindGroupLayout, uRotBuf);
 			//bindGroup = TriangleCPP.createBindGroup(bindGroupLayout, uRotBuf);
 
-			Console.WriteLine("----> Release..");
 			// last bit of clean-up
 			WebGPUNative.wgpuBindGroupLayoutRelease(bindGroupLayout);
 		}
@@ -227,7 +220,6 @@ namespace HelloWebGPUNet.Web
 		[MonoPInvokeCallback(typeof(Emscripten.Loop))]
 		public static bool redraw()
 		{
-			Console.WriteLine("Redrawing!");
 			IntPtr backBufView = WebGPUNative.wgpuSwapChainGetCurrentTextureView(SwapChain); // create textureView
 
 			WGPURenderPassColorAttachmentDescriptor colorDesc = new WGPURenderPassColorAttachmentDescriptor
@@ -257,7 +249,7 @@ namespace HelloWebGPUNet.Web
 			rotDeg += 0.1f;
 			fixed (void* data = &rotDeg)
 			{
-				QueueWriteBuffer(uRotBuf, 0, data, sizeof(float));
+				WebGPUNative.wgpuQueueWriteBuffer(Queue, uRotBuf, 0, data, sizeof(float));
 			}
 
 			// draw the triangle (comment these five lines to simply clear the screen)
@@ -326,18 +318,9 @@ namespace HelloWebGPUNet.Web
 				size = size
 			};
 			IntPtr buffer = WebGPUNative.wgpuDeviceCreateBuffer(Device, ref desc);
-			QueueWriteBuffer(buffer, 0, data, size);
+			Console.WriteLine($"queue: {Queue}, buffer: {buffer}, bufferOffset: {0}, data: {(int)data}, size: {size}");
+			WebGPUNative.wgpuQueueWriteBuffer(Queue, buffer, 0, data, size);
 			return buffer;
-		}
-
-		private static void QueueWriteBuffer(IntPtr buffer, ulong bufferOffset, void* data, ulong size)
-		{
-			Console.WriteLine("----> Queuing write buffer...");
-			////emsdk v1.40.0
-			//WebGPUNative.wgpuBufferSetSubData(buffer, bufferOffset, size, data);
-			//emsdk v1.40.1, Dawn
-			Console.WriteLine($"queue: {Queue}, buffer: {buffer}, bufferOffset: {bufferOffset}, data: {(int)data}, size: {size}");
-			WebGPUNative.wgpuQueueWriteBuffer(Queue, buffer, bufferOffset, data, size);
 		}
 
 		/**
