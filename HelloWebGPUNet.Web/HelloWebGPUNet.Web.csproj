@@ -1,0 +1,51 @@
+﻿<Project Sdk="Mono.WebAssembly.Sdk/0.2.2">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\WebGPU.NET\WebGPUGen\WaveEngine.Bindings.WebGPU\WaveEngine.Bindings.WebGPU.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\Dawn.Native\bin\$(Configuration)\x64\*.dll" Link="$(FileName)$(Extension)" Visible="false">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\lib\dawn\bin\win\x64\$(Configuration)\*.dll" Link="$(FileName)$(Extension)" Visible="false">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Condition="$(Configuration)=='Debug'" Include="..\Dawn.Native\bin\$(Configuration)\x64\*.pdb" Link="$(FileName)$(Extension)" Visible="false">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="libWebGPU.o" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="aot-link-descriptor.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="libWebGPU.o">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="index.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>
