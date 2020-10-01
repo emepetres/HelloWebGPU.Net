@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <linker>
   <assembly fullname="HelloWebGPUNet.Web" />
-  <assembly fullname="WaveEngine.Bindings.WebGPU" />
+  <assembly fullname="WaveEngine.Bindings.WebGPU.Browser" />
 </linker>
