@@ -17,7 +17,7 @@ namespace HelloWebGPUNet.WebGPU
         public static extern WGPUDevice createDevice(HWND handle, WGPUBackendType type = WGPUBackendType.WGPUBackendType_Force32);
 
         [DllImport("Dawn.Native.dll")]
-        public static extern WGPUSwapChain createSwapChain(WGPUDevice device);
+        public static extern WGPUSwapChain createSwapChain(WGPUDevice device, WGPUTextureUsage usage, uint width, uint height, WGPUPresentMode presentMode);
 
         [DllImport("Dawn.Native.dll")]
         public static extern WGPUTextureFormat getSwapChainFormat(WGPUDevice device);

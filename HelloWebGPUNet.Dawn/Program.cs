@@ -16,7 +16,7 @@ namespace HelloWebGPUNet
         ///  The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main()
+        unsafe static void Main()
         {
             Application.SetHighDpiMode(HighDpiMode.SystemAware);
             Application.EnableVisualStyles();
@@ -25,7 +25,7 @@ namespace HelloWebGPUNet
             var window = new Form1();
             var device = Dawn.createDevice(window.Handle);
             var queue = WebGPUNative.wgpuDeviceGetDefaultQueue(device);
-            var swapChain = Dawn.createSwapChain(device);
+            var swapChain = Dawn.createSwapChain(device, WGPUTextureUsage.WGPUTextureUsage_OutputAttachment, 800, 450, WGPUPresentMode.WGPUPresentMode_Mailbox);
 
             Triangle.Device = device;
             Triangle.Queue = queue;

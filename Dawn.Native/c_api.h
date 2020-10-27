@@ -8,6 +8,6 @@
 
 extern "C" {
 	EXPORT WGPUDevice createDevice(HWND handle, WGPUBackendType type);
-	EXPORT WGPUSwapChain createSwapChain(WGPUDevice device);
+	EXPORT WGPUSwapChain createSwapChain(WGPUDevice device, WGPUTextureUsage usage, UINT32 width, UINT32 height, WGPUPresentMode presentMode);
 	EXPORT WGPUTextureFormat getSwapChainFormat(WGPUDevice device);
 }

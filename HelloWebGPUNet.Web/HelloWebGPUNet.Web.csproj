@@ -27,7 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="WaveEngine.Bindings.WebGPU.Browser" Version="3.1003.967" />
+    <PackageReference Include="WaveEngine.Bindings.WebGPU.Browser" Version="3.1030.777-beta" />
   </ItemGroup>
 
   <ItemGroup>

@@ -223,25 +223,34 @@ WGPUDevice createDevice(HWND handle, WGPUBackendType type)
 	return impl::device;
 }
 
-WGPUSwapChain createSwapChain(WGPUDevice device)
+/**
+public char* label;
+public WGPUTextureUsage usage;
+public WGPUTextureFormat format;
+public uint width;
+public uint height;
+public WGPUPresentMode presentMode;
+*/
+
+WGPUSwapChain createSwapChain(WGPUDevice device, WGPUTextureUsage usage, UINT32 width, UINT32 height, WGPUPresentMode presentMode)
 {
 	WGPUSwapChainDescriptor swapDesc = {};
 	/*
 	 * Currently failing (probably because the nextInChain needs setting up, and
 	 * also with the correct WGPUSType_* for the platform).
 	 *
-	swapDesc.usage  = WGPUTextureUsage_OutputAttachment;
+	swapDesc.usage  = usage; // WGPUTextureUsage_OutputAttachment;
 	swapDesc.format = impl::swapPref;
-	swapDesc.width  = 800;
-	swapDesc.height = 450;
-	swapDesc.presentMode = WGPUPresentMode_Mailbox;
+	swapDesc.width  = width;
+	swapDesc.height = height;
+	swapDesc.presentMode = presentMode; // WGPUPresentMode_Mailbox;
 	 */
 	swapDesc.implementation = reinterpret_cast<uintptr_t>(&impl::swapImpl);
 	WGPUSwapChain swapchain = wgpuDeviceCreateSwapChain(device, nullptr, &swapDesc);
 	/*
 	 * Currently failing on hi-DPI (with Vulkan).
 	 */
-	wgpuSwapChainConfigure(swapchain, impl::swapPref, WGPUTextureUsage_OutputAttachment, 800, 450);
+	wgpuSwapChainConfigure(swapchain, impl::swapPref, usage, width, height);
 	return swapchain;
 }
 
