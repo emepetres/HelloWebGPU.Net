@@ -96,7 +96,7 @@ namespace HelloWebGPUNet
             };
             WGPUVertexStateDescriptor vertState = new WGPUVertexStateDescriptor
             {
-                indexFormat = WGPUIndexFormat.WGPUIndexFormat_Uint16,
+                ////indexFormat = WGPUIndexFormat.WGPUIndexFormat_Uint16,
                 vertexBufferCount = 1,
                 vertexBuffers = &vertDesc
             };
@@ -259,7 +259,7 @@ namespace HelloWebGPUNet
             WebGPUNative.wgpuRenderPassEncoderSetPipeline(pass, pipeline);
             WebGPUNative.wgpuRenderPassEncoderSetBindGroup(pass, 0, bindGroup, 0, null);
             WebGPUNative.wgpuRenderPassEncoderSetVertexBuffer(pass, 0, vertBuf, 0, 0);
-            WebGPUNative.wgpuRenderPassEncoderSetIndexBuffer(pass, indxBuf, 0, 0);
+            WebGPUNative.wgpuRenderPassEncoderSetIndexBufferWithFormat(pass, indxBuf, WGPUIndexFormat.WGPUIndexFormat_Uint16, 0, 0);
             WebGPUNative.wgpuRenderPassEncoderDrawIndexed(pass, 3, 1, 0, 0, 0);
 
             WebGPUNative.wgpuRenderPassEncoderEndPass(pass);
