@@ -28,6 +28,20 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Shaders\FragmentShader.spirv" />
+    <None Remove="Shaders\VertexShader.spirv" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Shaders\FragmentShader.spirv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Shaders\VertexShader.spirv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="WaveEngine.Bindings.WebGPU.Dawn" Version="3.1030.777-beta" />
   </ItemGroup>
 
