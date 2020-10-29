@@ -19,30 +19,8 @@ namespace HelloWebGPUNet
 
 		public static IntPtr pipeline;
 		public static IntPtr vertBuf; // vertex buffer with triangle position and colours
-		public static IntPtr indxBuf; // index buffer
-		public static IntPtr uRotBuf; // uniform buffer (containing the rotation angle)
-		public static IntPtr bindGroup;
 
-		static float rotDeg = 0.0f; // Current rotation angle (in degrees, updated per frame).
-		static char* str_entrypoint = (char*)Marshal.StringToHGlobalAnsi("main").ToPointer();
-
-		public static IntPtr createBindGroupLayout()
-		{
-			WGPUBindGroupLayoutEntry bglEntry = new WGPUBindGroupLayoutEntry
-			{
-				binding = 0,
-				visibility = WGPUShaderStage.WGPUShaderStage_Vertex,
-				type = WGPUBindingType.WGPUBindingType_UniformBuffer
-			};
-			WGPUBindGroupLayoutDescriptor bglDesc = new WGPUBindGroupLayoutDescriptor
-			{
-				entryCount = 1,
-				entries = &bglEntry
-			};
-			return WebGPUNative.wgpuDeviceCreateBindGroupLayout(Device, &bglDesc);
-		}
-
-		public static IntPtr CreatePipeline(IntPtr bindGroupLayout)
+		public static IntPtr CreatePipeline()
 		{
 			// Load shaders
 			var vertMod = CreateShader("Shaders/VertexShader.spirv");
@@ -51,27 +29,40 @@ namespace HelloWebGPUNet
 			var fragMod = CreateShader("Shaders/FragmentShader.spirv");
 			//var fragMod = TriangleCPP.createFragShader();
 
-			WGPUPipelineLayoutDescriptor layoutDesc = new WGPUPipelineLayoutDescriptor
-			{
-				bindGroupLayoutCount = 0
-			};
-			IntPtr pipelineLayout = WebGPUNative.wgpuDeviceCreatePipelineLayout(Device, &layoutDesc);
-
 			// begin pipeline set-up
-			WGPURenderPipelineDescriptor desc = new WGPURenderPipelineDescriptor
+			WGPURenderPipelineDescriptor desc = new WGPURenderPipelineDescriptor();
+
+			desc.primitiveTopology = WGPUPrimitiveTopology.WGPUPrimitiveTopology_TriangleList;
+			desc.sampleCount = 1;
+			desc.sampleMask = 0xFFFFFFFF; // <-- Note: this currently causes Emscripten to fail (sampleMask ends up as -1, which trips an assert)
+
+			// describe blend
+			WGPUBlendDescriptor blendDesc = new WGPUBlendDescriptor
 			{
-				layout = pipelineLayout,
-				vertexStage = new WGPUProgrammableStageDescriptor()
-				{
-					module = vertMod,
-					entryPoint = str_entrypoint
-				}
+				operation = WGPUBlendOperation.WGPUBlendOperation_Add,
+				srcFactor = WGPUBlendFactor.WGPUBlendFactor_SrcAlpha,
+				dstFactor = WGPUBlendFactor.WGPUBlendFactor_OneMinusSrcAlpha
 			};
+			WGPUColorStateDescriptor colorDesc = new WGPUColorStateDescriptor
+			{
+				format = Dawn.getSwapChainFormat(Device),
+				alphaBlend = blendDesc,
+				colorBlend = blendDesc,
+				writeMask = WGPUColorWriteMask.WGPUColorWriteMask_All
+			};
+			desc.colorStates = &colorDesc;
+			desc.colorStateCount = 1;
+
+			desc.vertexStage = new WGPUProgrammableStageDescriptor()
+			{
+				module = vertMod,
+				entryPoint = (char*)Marshal.StringToHGlobalAnsi("VS").ToPointer(),
+		};
 
 			WGPUProgrammableStageDescriptor fragStage = new WGPUProgrammableStageDescriptor
 			{
 				module = fragMod,
-				entryPoint = str_entrypoint
+				entryPoint = (char*)Marshal.StringToHGlobalAnsi("PS").ToPointer(),
 			};
 			desc.fragmentStage = &fragStage;
 
@@ -104,34 +95,17 @@ namespace HelloWebGPUNet
 			};
 
 			desc.vertexState = &vertState;
-			desc.primitiveTopology = WGPUPrimitiveTopology.WGPUPrimitiveTopology_TriangleList;
 
-			desc.sampleCount = 1;
-
-			// describe blend
-			WGPUBlendDescriptor blendDesc = new WGPUBlendDescriptor
+			WGPUPipelineLayoutDescriptor layoutDesc = new WGPUPipelineLayoutDescriptor
 			{
-				operation = WGPUBlendOperation.WGPUBlendOperation_Add,
-				srcFactor = WGPUBlendFactor.WGPUBlendFactor_SrcAlpha,
-				dstFactor = WGPUBlendFactor.WGPUBlendFactor_OneMinusSrcAlpha
+				bindGroupLayoutCount = 0
 			};
-			WGPUColorStateDescriptor colorDesc = new WGPUColorStateDescriptor
-			{
-				format = Dawn.getSwapChainFormat(Device),
-				alphaBlend = blendDesc,
-				colorBlend = blendDesc,
-				writeMask = WGPUColorWriteMask.WGPUColorWriteMask_All
-			};
-
-			desc.colorStateCount = 1;
-			desc.colorStates = &colorDesc;
-
-			desc.sampleMask = 0xFFFFFFFF; // <-- Note: this currently causes Emscripten to fail (sampleMask ends up as -1, which trips an assert)
+			desc.layout = WebGPUNative.wgpuDeviceCreatePipelineLayout(Device, &layoutDesc);
 
 			IntPtr _pipeline = WebGPUNative.wgpuDeviceCreateRenderPipeline(Device, ref desc);
 
 			// partial clean-up (just move to the end, no?)
-			WebGPUNative.wgpuPipelineLayoutRelease(pipelineLayout);
+			WebGPUNative.wgpuPipelineLayoutRelease(desc.layout);
 
 			WebGPUNative.wgpuShaderModuleRelease(fragMod);
 			WebGPUNative.wgpuShaderModuleRelease(vertMod);
@@ -159,17 +133,11 @@ namespace HelloWebGPUNet
 
 		public static void CreatePipelineAndBuffers()
 		{
-			IntPtr bindGroupLayout = createBindGroupLayout();
-			//IntPtr bindGroupLayout = TriangleCPP.createBindGroupLayout();
-
-			pipeline = CreatePipeline(bindGroupLayout);
-			//pipeline = TriangleCPP.createPipeline(bindGroupLayout);
+			pipeline = CreatePipeline();
+			//pipeline = TriangleCPP.createPipeline();
 
 			vertBuf = CreateVertBuffer();
 			//vertBuf = TriangleCPP.createVertBuffer();
-
-			// last bit of clean-up
-			WebGPUNative.wgpuBindGroupLayoutRelease(bindGroupLayout);
 		}
 
 		public static bool redraw()
