@@ -183,9 +183,9 @@ namespace HelloWebGPUNet
 				storeOp = WGPUStoreOp.WGPUStoreOp_Store,
 				clearColor = new WGPUColor
 				{
-					r = 0.3f,
-					g = 0.3f,
-					b = 0.3f,
+					r = 0.392f,
+					g = 0.584f,
+					b = 0.929f,
 					a = 1.0f
 				}
 			};
