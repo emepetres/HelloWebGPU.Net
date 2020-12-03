@@ -24,7 +24,7 @@ namespace HelloWebGPUNet
         static float rotDeg = 0.0f; // Current rotation angle (in degrees, updated per frame).
         static char* str_entrypoint = (char*)Marshal.StringToHGlobalAnsi("main").ToPointer();
 
-        public static IntPtr createBindGroupLayout()
+        public static IntPtr createBindGroupLayout() // ResourceLayout on wave
         {
             WGPUBindGroupLayoutEntry bglEntry = new WGPUBindGroupLayoutEntry
             {
@@ -179,7 +179,7 @@ namespace HelloWebGPUNet
             return data_buff;
         }
 
-        public static IntPtr CreateBindGroup(IntPtr bindGroupLayout, IntPtr _uRotBuf)
+        public static IntPtr CreateBindGroup(IntPtr bindGroupLayout, IntPtr _uRotBuf) // ResourceSet on wave
         {
             WGPUBindGroupEntry bgEntry = new WGPUBindGroupEntry
             {
